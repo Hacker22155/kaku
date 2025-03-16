@@ -1,0 +1,119 @@
+<!DOCTYPE html>    
+<html lang="bn">    
+<head>    
+    <meta charset="UTF-8">    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">    
+    <title>🚀 টেক টাইগার - ওয়েব কনটেন্ট বিশ্লেষক 😈</title>    
+    <style>    
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; text-align: center; padding: 20px; }    
+        #response { background-color: #d4edda; padding: 10px; border-radius: 5px; margin-top: 20px; display: none; font-size: 18px; color: #155724; }    
+        button { background-color: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; margin: 5px; }    
+        button:hover { background-color: #0056b3; }    
+        #loading { display: none; font-size: 18px; color: #ff0000; }    
+    </style>    
+</head>    
+<body>    
+    
+    <h1>🚀 টেক টাইগার - অফলাইন প্রশ্নোত্তর সিস্টেম 😈</h1>    
+    <button onclick="startListening()">🎤 প্রশ্ন কর</button>    
+    <button onclick="stopSpeaking()">🛑 স্টপ</button>    
+    <br><br>    
+    <div id="loading">🔎 প্রশ্ন যাচাই করা হচ্ছে...</div>    
+    <div id="response"></div>    
+    
+    <script>    
+        let recognition;    
+        let speechSynthesis = window.speechSynthesis;    
+        let utterance;    
+        let listening = false;  // নতুন ফ্ল্যাগ যুক্ত করা হল  
+  
+        function setupRecognition() {    
+            recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();    
+            recognition.lang = 'bn-BD';    
+            recognition.continuous = false;    
+            recognition.interimResults = false;    
+            recognition.onresult = async function(event) {    
+                processSpeech(event.results[0][0].transcript);    
+            };    
+            recognition.onerror = function(event) {    
+                showError();    
+            };    
+        }    
+    
+        function startListening() {    
+            if (!recognition) { setupRecognition(); }    
+            if (listening) return;  // যদি ইতিমধ্যে শুনছে, কিছুই না করো    
+            document.getElementById('loading').style.display = 'block';    
+            recognition.start();    
+            listening = true;    
+        }    
+  
+        function stopSpeaking() {    
+            if (speechSynthesis.speaking) {    
+                speechSynthesis.cancel();    
+            }  
+            if (recognition) {    
+                recognition.stop();  // মাইক্রোফোন বন্ধ করা    
+            }  
+            listening = false;    
+        }    
+  
+        async function processSpeech(query) {    
+            document.getElementById('loading').style.display = 'none';    
+            document.getElementById('response').style.display = 'block';    
+            document.getElementById('response').innerHTML = `তুমি বলেছো: <strong>${query}</strong><br>🔎 উত্তর খোঁজা হচ্ছে...`;    
+
+            let answer = await fetchFromLocal(query);    
+
+            document.getElementById('response').innerHTML = `<strong>উত্তর:</strong> ${answer}`;    
+            speakAnswer(answer);    
+
+            // এখানে মাইক্রোফোন বন্ধ করা হবে
+            if (recognition) {    
+                recognition.stop();  // মাইক্রোফোন বন্ধ করা
+            }  
+            listening = false; // পুনরায় শুনছে না
+        }    
+    
+        function showError() {    
+            document.getElementById('loading').style.display = 'none';    
+            document.getElementById('response').style.display = 'block';    
+            document.getElementById('response').innerHTML = '❌ দুঃখিত, কিছু সমস্যা হয়েছে। আবার চেষ্টা করুন!';    
+        }    
+    
+        async function fetchFromLocal(query) {    
+            try {    
+                let response = await fetch('https://raw.githubusercontent.com/Hacker22155/kaku/main/data.txt');    
+                let data = await response.text();    
+                let answer = extractAnswerFromText(data, query);    
+                    
+                if (answer) {    
+                    return answer;    
+                } else {    
+                    return "❌ কিছুই পাইনি!";    
+                }    
+            } catch (error) {    
+                return '❌ কিছু সমস্যা হয়েছে! আবার চেষ্টা করুন!';    
+            }    
+        }    
+    
+        function extractAnswerFromText(data, query) {    
+            let lines = data.split('\n');    
+            for (let line of lines) {    
+                if (line.toLowerCase().includes(query.toLowerCase())) {    
+                    return line; // ফাইল থেকে মেলে এমন প্রথম লাইনে উত্তর দিবে    
+                }    
+            }    
+            return null;    
+        }    
+    
+        function speakAnswer(answer) {    
+            utterance = new SpeechSynthesisUtterance(answer);    
+            utterance.lang = 'bn-BD';    
+            utterance.rate = 1.2;  // স্পিড বাড়িয়ে দিলাম 🔥    
+            speechSynthesis.speak(utterance);    
+        }    
+    </script>    
+    
+</body>    
+  </html>
